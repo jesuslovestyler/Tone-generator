@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Tone Generator</title>
+    <style>
+      :root {
+        --bg: #f4f6f4;
+        --surface: #ffffff;
+        --ink: #21302c;
+        --ink-soft: #52645d;
+        --line: #d8e0da;
+        --accent: #1f7a5c;
+        --accent-deep: #156048;
+        --accent-soft: #e2f0e9;
+        --chip-bg: #eef3f0;
+        --chip-ink: #2c423b;
+        --warn: #8a5a12;
+        --warn-bg: #faf1dc;
+        --track: #cfdad3;
+        --shadow: 0 2px 10px rgba(30, 50, 42, 0.08);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #12181a;
+          --surface: #1c2426;
+          --ink: #e6ede9;
+          --ink-soft: #a7bab1;
+          --line: #33413d;
+          --accent: #3dbb8f;
+          --accent-deep: #57cfa4;
+          --accent-soft: #1d332b;
+          --chip-bg: #263330;
+          --chip-ink: #d7e6de;
+          --warn: #e8c37a;
+          --warn-bg: #332a18;
+          --track: #3b4a45;
+          --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+        }
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Avenir Next", "Segoe UI", system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        max-width: 640px;
+        margin: 0 auto;
+        padding: 20px 18px 48px;
+      }
+
+      .home-row { margin-bottom: 18px; }
+      .home-pill {
+        display: inline-block;
+        padding: 9px 18px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--ink);
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 600;
+        box-shadow: var(--shadow);
+      }
+      .home-pill:active { background: var(--accent-soft); }
+
+      h1 {
+        font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+        font-size: 34px;
+        font-weight: 600;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+      }
+      .intro {
+        margin: 0 0 24px;
+        color: var(--ink-soft);
+        font-size: 17px;
+      }
+
+      .panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 22px 20px;
+        margin-bottom: 18px;
+      }
+
+      /* Frequency readout */
+      .freq-display {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        text-align: center;
+      }
+      .freq-value {
+        font-variant-numeric: tabular-nums;
+        font-size: 52px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .freq-unit { font-size: 22px; color: var(--ink-soft); font-weight: 600; }
+      .note-line {
+        text-align: center;
+        margin-top: 4px;
+        font-size: 17px;
+        color: var(--ink-soft);
+      }
+      .note-line strong { color: var(--accent-deep); font-size: 19px; }
+
+      label.field-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        margin: 22px 0 8px;
+      }
+      label.field-label:first-of-type { margin-top: 18px; }
+
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 44px;
+        background: transparent;
+        cursor: pointer;
+        margin: 0;
+      }
+      input[type="range"]::-webkit-slider-runnable-track {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--track);
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 30px;
+        height: 30px;
+        margin-top: -11px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 3px solid var(--surface);
+        box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+      }
+      input[type="range"]::-moz-range-track {
+        height: 8px;
+        border-radius: 4px;
+        background: var(--track);
+      }
+      input[type="range"]::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--accent);
+        border: 3px solid var(--surface);
+        box-shadow: 0 1px 5px rgba(0,0,0,0.25);
+      }
+      .range-ends {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: var(--ink-soft);
+        margin-top: -4px;
+      }
+
+      .freq-input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .freq-input-row input[type="number"] {
+        flex: 1;
+        min-width: 0;
+        font-size: 20px;
+        font-variant-numeric: tabular-nums;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      .freq-input-row span { font-size: 17px; color: var(--ink-soft); font-weight: 600; }
+      .freq-input-row button {
+        padding: 12px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--chip-bg);
+        color: var(--chip-ink);
+        cursor: pointer;
+        min-height: 48px;
+      }
+      .freq-input-row button:active { background: var(--accent-soft); }
+
+      /* Preset chips */
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+      }
+      .chip {
+        padding: 11px 16px;
+        min-height: 48px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--chip-bg);
+        color: var(--chip-ink);
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .chip:active, .chip.active { background: var(--accent-soft); border-color: var(--accent); color: var(--accent-deep); }
+
+      /* Waveform segmented control */
+      .waves {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+      }
+      .wave-btn {
+        padding: 12px 4px;
+        min-height: 52px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--chip-bg);
+        color: var(--chip-ink);
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .wave-btn.active {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        .wave-btn.active { color: #0d1512; }
+      }
+      @media (max-width: 380px) {
+        .waves { grid-template-columns: repeat(2, 1fr); }
+      }
+
+      /* Play button */
+      .play-btn {
+        display: block;
+        width: 100%;
+        margin-top: 26px;
+        padding: 20px;
+        min-height: 72px;
+        border: none;
+        border-radius: 14px;
+        background: var(--accent);
+        color: #ffffff;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+      }
+      @media (prefers-color-scheme: dark) {
+        .play-btn { color: #0d1512; }
+      }
+      .play-btn.playing { background: #b3402e; color: #ffffff; }
+      .play-btn:active { filter: brightness(0.93); }
+
+      .volume-row { display: flex; align-items: center; gap: 12px; }
+      .volume-row input[type="range"] { flex: 1; }
+      .volume-pct {
+        font-variant-numeric: tabular-nums;
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ink-soft);
+        min-width: 44px;
+        text-align: right;
+      }
+
+      .caution {
+        background: var(--warn-bg);
+        color: var(--warn);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 15px;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="home-row">
+        <a class="home-pill" href="https://jesuslovestyler.com/">⌂ Home</a>
+      </div>
+
+      <h1>Tone Generator</h1>
+      <p class="intro">Dial in any frequency and hear a clean, steady tone — handy for tuning instruments, testing headphones and speakers, or music practice.</p>
+
+      <div class="panel">
+        <div class="freq-display">
+          <span class="freq-value" id="freqValue">440</span>
+          <span class="freq-unit">Hz</span>
+        </div>
+        <p class="note-line">Nearest note: <strong id="noteName">A4</strong> <span id="noteDetail"></span></p>
+
+        <label class="field-label" for="freqSlider">Frequency</label>
+        <input type="range" id="freqSlider" min="0" max="1000" step="1" value="621" aria-label="Frequency (logarithmic)" />
+        <div class="range-ends"><span>20 Hz</span><span>20,000 Hz</span></div>
+
+        <label class="field-label" for="freqInput">Exact frequency</label>
+        <div class="freq-input-row">
+          <input type="number" id="freqInput" min="20" max="20000" step="1" value="440" inputmode="decimal" />
+          <span>Hz</span>
+          <button type="button" id="freqSet">Set</button>
+        </div>
+
+        <label class="field-label">Presets</label>
+        <div class="chips" id="presetChips">
+          <button type="button" class="chip" data-freq="100">100 Hz</button>
+          <button type="button" class="chip" data-freq="110">A2 · 110 Hz</button>
+          <button type="button" class="chip" data-freq="220">A3 · 220 Hz</button>
+          <button type="button" class="chip" data-freq="440">A4 · 440 Hz</button>
+          <button type="button" class="chip" data-freq="880">A5 · 880 Hz</button>
+          <button type="button" class="chip" data-freq="1000">1,000 Hz</button>
+        </div>
+
+        <label class="field-label">Waveform</label>
+        <div class="waves" id="waveGroup" role="group" aria-label="Waveform">
+          <button type="button" class="wave-btn active" data-wave="sine">Sine</button>
+          <button type="button" class="wave-btn" data-wave="triangle">Triangle</button>
+          <button type="button" class="wave-btn" data-wave="square">Square</button>
+          <button type="button" class="wave-btn" data-wave="sawtooth">Sawtooth</button>
+        </div>
+
+        <label class="field-label" for="volSlider">Volume</label>
+        <div class="volume-row">
+          <input type="range" id="volSlider" min="0" max="100" step="1" value="30" aria-label="Volume" />
+          <span class="volume-pct" id="volPct">30%</span>
+        </div>
+
+        <button type="button" class="play-btn" id="playBtn">▶ Play</button>
+      </div>
+
+      <p class="caution">Please keep the volume gentle — high frequencies and louder waveforms like square and sawtooth can be harsh on ears and speakers.</p>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        var MIN_FREQ = 20;
+        var MAX_FREQ = 20000;
+        var RAMP = 0.03; // seconds — short ramps keep changes click-free
+
+        var freqSlider = document.getElementById("freqSlider");
+        var freqInput = document.getElementById("freqInput");
+        var freqValue = document.getElementById("freqValue");
+        var noteName = document.getElementById("noteName");
+        var noteDetail = document.getElementById("noteDetail");
+        var volSlider = document.getElementById("volSlider");
+        var volPct = document.getElementById("volPct");
+        var playBtn = document.getElementById("playBtn");
+        var waveGroup = document.getElementById("waveGroup");
+        var presetChips = document.getElementById("presetChips");
+
+        var state = {
+          freq: 440,
+          wave: "sine",
+          volume: 0.3,
+          playing: false
+        };
+
+        var audioCtx = null;
+        var oscillator = null;
+        var gainNode = null;
+
+        // --- Logarithmic frequency mapping ---
+        function sliderToFreq(v) {
+          var t = v / 1000;
+          return MIN_FREQ * Math.pow(MAX_FREQ / MIN_FREQ, t);
+        }
+        function freqToSlider(f) {
+          var t = Math.log(f / MIN_FREQ) / Math.log(MAX_FREQ / MIN_FREQ);
+          return Math.round(t * 1000);
+        }
+        function clampFreq(f) {
+          if (isNaN(f)) return state.freq;
+          return Math.min(MAX_FREQ, Math.max(MIN_FREQ, f));
+        }
+        function formatFreq(f) {
+          if (f < 100) return (Math.round(f * 10) / 10).toString();
+          return Math.round(f).toLocaleString("en-US");
+        }
+
+        // --- Nearest musical note ---
+        var NOTE_NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+        function noteInfo(f) {
+          var midiFloat = 69 + 12 * Math.log2(f / 440);
+          var midi = Math.round(midiFloat);
+          var name = NOTE_NAMES[midi % 12] + (Math.floor(midi / 12) - 1);
+          var cents = Math.round((midiFloat - midi) * 100);
+          return { name: name, cents: cents };
+        }
+
+        // --- Display ---
+        function render() {
+          freqValue.textContent = formatFreq(state.freq);
+          var info = noteInfo(state.freq);
+          noteName.textContent = info.name;
+          if (info.cents === 0) {
+            noteDetail.textContent = "— right on pitch";
+          } else if (info.cents > 0) {
+            noteDetail.textContent = "— " + info.cents + " cents sharp";
+          } else {
+            noteDetail.textContent = "— " + Math.abs(info.cents) + " cents flat";
+          }
+          volPct.textContent = Math.round(state.volume * 100) + "%";
+          // Mark the active preset chip, if any
+          var chips = presetChips.querySelectorAll(".chip");
+          for (var i = 0; i < chips.length; i++) {
+            var cf = parseFloat(chips[i].getAttribute("data-freq"));
+            chips[i].classList.toggle("active", Math.abs(cf - state.freq) < 0.51);
+          }
+        }
+
+        // --- Audio ---
+        function ensureContext() {
+          if (!audioCtx) {
+            var AC = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AC();
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0;
+            gainNode.connect(audioCtx.destination);
+          }
+          if (audioCtx.state === "suspended") {
+            audioCtx.resume();
+          }
+        }
+
+        function startTone() {
+          ensureContext();
+          oscillator = audioCtx.createOscillator();
+          oscillator.type = state.wave;
+          oscillator.frequency.value = state.freq;
+          oscillator.connect(gainNode);
+          oscillator.start();
+          var now = audioCtx.currentTime;
+          gainNode.gain.cancelScheduledValues(now);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+          gainNode.gain.linearRampToValueAtTime(state.volume, now + RAMP);
+          state.playing = true;
+          playBtn.textContent = "■ Stop";
+          playBtn.classList.add("playing");
+        }
+
+        function stopTone() {
+          if (!audioCtx || !oscillator) return;
+          var osc = oscillator;
+          var now = audioCtx.currentTime;
+          gainNode.gain.cancelScheduledValues(now);
+          gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+          gainNode.gain.linearRampToValueAtTime(0, now + RAMP);
+          try { osc.stop(now + RAMP + 0.02); } catch (e) { /* already stopped */ }
+          oscillator = null;
+          state.playing = false;
+          playBtn.textContent = "▶ Play";
+          playBtn.classList.remove("playing");
+        }
+
+        function applyFreqToOscillator() {
+          if (state.playing && oscillator && audioCtx) {
+            var now = audioCtx.currentTime;
+            oscillator.frequency.cancelScheduledValues(now);
+            oscillator.frequency.setValueAtTime(oscillator.frequency.value, now);
+            oscillator.frequency.linearRampToValueAtTime(state.freq, now + RAMP);
+          }
+        }
+
+        function applyVolumeToGain() {
+          if (state.playing && gainNode && audioCtx) {
+            gainNode.gain.setTargetAtTime(state.volume, audioCtx.currentTime, 0.015);
+          }
+        }
+
+        // --- Controls ---
+        function setFrequency(f, fromSlider) {
+          state.freq = clampFreq(f);
+          if (!fromSlider) {
+            freqSlider.value = freqToSlider(state.freq);
+          }
+          freqInput.value = Math.round(state.freq * 10) / 10;
+          render();
+          applyFreqToOscillator();
+        }
+
+        freqSlider.addEventListener("input", function () {
+          setFrequency(sliderToFreq(parseFloat(freqSlider.value)), true);
+        });
+
+        document.getElementById("freqSet").addEventListener("click", function () {
+          setFrequency(parseFloat(freqInput.value), false);
+        });
+        freqInput.addEventListener("keydown", function (ev) {
+          if (ev.key === "Enter") {
+            ev.preventDefault();
+            setFrequency(parseFloat(freqInput.value), false);
+          }
+        });
+        freqInput.addEventListener("change", function () {
+          setFrequency(parseFloat(freqInput.value), false);
+        });
+
+        presetChips.addEventListener("click", function (ev) {
+          var btn = ev.target.closest(".chip");
+          if (!btn) return;
+          setFrequency(parseFloat(btn.getAttribute("data-freq")), false);
+        });
+
+        waveGroup.addEventListener("click", function (ev) {
+          var btn = ev.target.closest(".wave-btn");
+          if (!btn) return;
+          state.wave = btn.getAttribute("data-wave");
+          var btns = waveGroup.querySelectorAll(".wave-btn");
+          for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.toggle("active", btns[i] === btn);
+          }
+          if (state.playing && oscillator) {
+            oscillator.type = state.wave;
+          }
+        });
+
+        volSlider.addEventListener("input", function () {
+          state.volume = parseFloat(volSlider.value) / 100;
+          render();
+          applyVolumeToGain();
+        });
+
+        playBtn.addEventListener("click", function () {
+          if (state.playing) {
+            stopTone();
+          } else {
+            startTone();
+          }
+        });
+
+        // Init: sync slider position to the default 440 Hz
+        freqSlider.value = freqToSlider(state.freq);
+        render();
+      })();
+    </script>
+    <script data-goatcounter="https://jesuslovestyler.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+  </body>
+</html>
